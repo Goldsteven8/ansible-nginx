@@ -1,0 +1,38 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Ensure web user exists
+  user:
+    name: "{{ web_user }}"
+    state: present
+
+- name: Ensure web root directory exists
+  file:
+    path: "{{ web_root }}"
+    state: directory
+    owner: "{{ web_user }}"
+    group: "{{ web_user }}"
+
+- name: Deploy index.html
+  template:
+    src: index.html.j2
+    dest: "{{ web_root }}/index.html"
+
+- name: Deploy nginx site config
+  template:
+    src: nginx_site.j2
+    dest: "/etc/nginx/sites-available/{{ nginx_site_name }}"
+
+- name: Enable nginx site
+  file:
+    src: "/etc/nginx/sites-available/{{ nginx_site_name }}"
+    dest: "/etc/nginx/sites-enabled/{{ nginx_site_name }}"
+    state: link
+
+- name: Restart nginx
+  service:
+    name: nginx
+    state: restarted
+

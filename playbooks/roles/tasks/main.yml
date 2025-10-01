@@ -1,0 +1,38 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Ensure web user exists
+  user:
+    name: "{{ web_user }}"
+    state: present
+    create_home: yes
+
+- name: Ensure web root directory exists
+  file:
+    path: "{{ web_root }}"
+    state: directory
+    owner: "{{ web_user }}"
+    group: "{{ web_user }}"
+    mode: '0755'
+
+- name: Install NGINX
+  apt:
+    name: nginx
+    state: present
+
+- name: Copy NGINX site configuration
+  template:
+    src: nginx_site.j2
+    dest: /etc/nginx/sites-available/{{ nginx_site_name }}
+  notify: Reload NGINX
+
+- name: Enable site
+  file:
+    src: /etc/nginx/sites-available/{{ nginx_site_name }}
+    dest: /etc/nginx/sites-enabled/{{ nginx_site_name }}
+    state: link
+  notify: Reload NGINX
+
